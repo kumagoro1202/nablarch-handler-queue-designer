@@ -1,0 +1,122 @@
+# Nablarch Handler Queue Ordering Constraints
+# These constraints define mandatory ordering rules for handler queue configuration.
+# Violation of these constraints will result in runtime errors or incorrect behavior.
+
+constraints:
+  - id: C-01
+    description: TransactionManagementHandler must be placed after DbConnectionManagementHandler
+    rule:
+      handler: TransactionManagementHandler
+      must_be_after: DbConnectionManagementHandler
+    reason: >
+      Database connection must be established before a transaction can begin.
+      TransactionManagementHandler requires an active DB connection to manage
+      transaction boundaries (begin/commit/rollback).
+    severity: critical
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+
+  - id: C-02
+    description: Dispatch handler (HttpRequestJavaPackageMapping / RoutesMapping) must be at the end
+    rule:
+      handler: dispatch
+      must_be_last: true
+    reason: >
+      The dispatch handler routes to business logic and does not invoke
+      subsequent handlers in the queue. Any handler placed after it will
+      never be executed.
+    severity: critical
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+
+  - id: C-03
+    description: RoutesMapping inner handlers must be configured inside RoutesMapping
+    rule:
+      handlers: [BodyConvertHandler, JaxRsBeanValidationHandler]
+      must_be_inside: RoutesMapping
+    reason: >
+      These handlers operate on route-specific context that is only available
+      after the RoutesMapping has resolved the target resource method.
+    severity: critical
+    applicable_types: [rest]
+
+  - id: C-04
+    description: HttpMessagingRequestParsingHandler must be after HttpResponseHandler
+    rule:
+      handler: HttpMessagingRequestParsingHandler
+      must_be_after: HttpResponseHandler
+    reason: >
+      HTTP messaging request parsing depends on the response handler having
+      been set up to handle the eventual response.
+    severity: critical
+    applicable_types: [http_messaging]
+
+  - id: C-05
+    description: HttpMessagingRequestParsingHandler must be after ThreadContextHandler
+    rule:
+      handler: HttpMessagingRequestParsingHandler
+      must_be_after: ThreadContextHandler
+    reason: >
+      The messaging request parser requires thread context variables
+      (request ID, user ID) to be populated before parsing.
+    severity: critical
+    applicable_types: [http_messaging]
+
+  - id: C-06
+    description: HealthCheckEndpointHandler must be after response handlers
+    rule:
+      handler: HealthCheckEndpointHandler
+      must_be_after: [HttpResponseHandler, JaxRsResponseHandler]
+    reason: >
+      Health check responses need the response handler to be in the
+      handler chain to properly format and send the response.
+    severity: warning
+    applicable_types: [web, rest]
+
+  - id: C-07
+    description: LoopHandler must be after MultiThreadExecutionHandler
+    rule:
+      handler: LoopHandler
+      must_be_after: MultiThreadExecutionHandler
+    reason: >
+      LoopHandler operates within sub-threads spawned by
+      MultiThreadExecutionHandler. It must be placed downstream.
+    severity: critical
+    applicable_types: [batch, batch_resident]
+
+  - id: C-08
+    description: DataReadHandler must be after LoopHandler
+    rule:
+      handler: DataReadHandler
+      must_be_after: LoopHandler
+    reason: >
+      Data reading is controlled by the loop handler's iteration logic.
+      DataReadHandler must be inside the loop.
+    severity: critical
+    applicable_types: [batch, batch_resident]
+
+  - id: C-09
+    description: GlobalErrorHandler should be placed near the top
+    rule:
+      handler: GlobalErrorHandler
+      preferred_position: near_top
+    reason: >
+      GlobalErrorHandler catches all uncaught exceptions. Placing it near
+      the top ensures maximum coverage of error handling.
+    severity: warning
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+
+  - id: C-10
+    description: Interceptor execution order must be explicitly specified
+    rule:
+      type: interceptor_ordering
+      default_order:
+        - OnDoubleSubmission
+        - UseToken
+        - OnErrors
+        - OnError
+        - InjectForm
+    reason: >
+      JVM class loading order is non-deterministic. Interceptor execution
+      order must be explicitly defined in the configuration to ensure
+      consistent behavior across environments.
+    severity: warning
+    applicable_types: [web]

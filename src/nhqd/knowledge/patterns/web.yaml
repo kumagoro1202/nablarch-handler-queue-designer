@@ -1,0 +1,87 @@
+# Web Application Handler Queue Pattern
+# Standard configuration for Nablarch web applications (HTML/JSP).
+
+pattern:
+  name: web_standard
+  app_type: web
+  description: Standard web application with full handler stack
+  controller_class: nablarch.fw.web.servlet.WebFrontController
+  controller_name: webFrontController
+
+  handlers:
+    - name: HttpCharacterEncodingHandler
+      full_class: nablarch.fw.web.handler.HttpCharacterEncodingHandler
+      required: true
+
+    - name: ThreadContextClearHandler
+      full_class: nablarch.common.handler.threadcontext.ThreadContextClearHandler
+      required: true
+
+    - name: GlobalErrorHandler
+      full_class: nablarch.fw.handler.GlobalErrorHandler
+      required: true
+
+    - name: HttpResponseHandler
+      full_class: nablarch.fw.web.handler.HttpResponseHandler
+      required: true
+
+    - name: SecureHandler
+      full_class: nablarch.fw.web.handler.SecureHandler
+      required_when: security.secure_headers
+
+    - name: MultipartHandler
+      full_class: nablarch.fw.web.upload.handler.MultipartHandler
+      required_when: file_handling.multipart
+
+    - name: SessionStoreHandler
+      full_class: nablarch.common.web.session.SessionStoreHandler
+      required_when: session.enabled
+
+    - name: ThreadContextHandler
+      full_class: nablarch.common.handler.threadcontext.ThreadContextHandler
+      required: true
+
+    - name: HttpAccessLogHandler
+      full_class: nablarch.fw.web.handler.HttpAccessLogHandler
+      required_when: logging.access_log
+
+    - name: NormalizationHandler
+      full_class: nablarch.fw.web.handler.NormalizationHandler
+      required_when: normalization.trim
+
+    - name: ForwardingHandler
+      full_class: nablarch.fw.web.handler.ForwardingHandler
+      required: true
+
+    - name: HttpErrorHandler
+      full_class: nablarch.fw.web.handler.HttpErrorHandler
+      required: true
+
+    - name: NablarchTagHandler
+      full_class: nablarch.common.web.handler.NablarchTagHandler
+      required: true
+
+    - name: CsrfTokenVerificationHandler
+      full_class: nablarch.fw.web.handler.CsrfTokenVerificationHandler
+      required_when: security.csrf_protection
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+
+    - name: TransactionManagementHandler
+      full_class: nablarch.common.handler.TransactionManagementHandler
+      required_when: database.transaction
+
+    - name: LoginUserPrincipalCheckHandler
+      full_class: nablarch.common.web.handler.LoginUserPrincipalCheckHandler
+      required_when: authentication.login_check
+
+    - name: ErrorForwardHandler
+      full_class: nablarch.fw.web.handler.ErrorForwardHandler
+      required: true
+
+    - name: HttpRequestJavaPackageMapping
+      full_class: nablarch.fw.web.handler.HttpRequestJavaPackageMapping
+      required: true
+      fixed_position: last

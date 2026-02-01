@@ -1,0 +1,50 @@
+# Batch Application Handler Queue Pattern (On-demand)
+# Configuration for Nablarch on-demand batch applications with DB access.
+
+pattern:
+  name: batch_ondemand
+  app_type: batch
+  description: On-demand batch application with database access
+  controller_class: nablarch.fw.launcher.Main
+  controller_name: main
+
+  handlers:
+    - name: StatusCodeConvertHandler
+      full_class: nablarch.fw.handler.StatusCodeConvertHandler
+      required: true
+
+    - name: GlobalErrorHandler
+      full_class: nablarch.fw.handler.GlobalErrorHandler
+      required: true
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+      note: "For initialization processing"
+
+    - name: TransactionManagementHandler
+      full_class: nablarch.common.handler.TransactionManagementHandler
+      required_when: database.transaction
+      note: "For initialization processing"
+
+    - name: RequestPathJavaPackageMapping
+      full_class: nablarch.fw.handler.RequestPathJavaPackageMapping
+      required: true
+
+    - name: MultiThreadExecutionHandler
+      full_class: nablarch.fw.handler.MultiThreadExecutionHandler
+      required: true
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+      note: "For business processing (per-thread)"
+
+    - name: LoopHandler
+      full_class: nablarch.fw.handler.LoopHandler
+      required: true
+
+    - name: DataReadHandler
+      full_class: nablarch.fw.handler.DataReadHandler
+      required: true
+      fixed_position: last

@@ -1,0 +1,39 @@
+# RESTful Web Service Handler Queue Pattern
+# Minimal configuration for Nablarch REST API applications.
+
+pattern:
+  name: rest_minimal
+  app_type: rest
+  description: RESTful web service with JAX-RS support
+  controller_class: nablarch.fw.web.servlet.WebFrontController
+  controller_name: webFrontController
+
+  handlers:
+    - name: GlobalErrorHandler
+      full_class: nablarch.fw.handler.GlobalErrorHandler
+      required: true
+
+    - name: JaxRsResponseHandler
+      full_class: nablarch.fw.jaxrs.JaxRsResponseHandler
+      required: true
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+
+    - name: TransactionManagementHandler
+      full_class: nablarch.common.handler.TransactionManagementHandler
+      required_when: database.transaction
+
+    - name: RoutesMapping
+      full_class: nablarch.fw.jaxrs.JaxRsMethodBinder
+      required: true
+      fixed_position: last
+      inner_handlers:
+        - name: BodyConvertHandler
+          full_class: nablarch.fw.jaxrs.BodyConvertHandler
+          required: true
+
+        - name: JaxRsBeanValidationHandler
+          full_class: nablarch.fw.jaxrs.JaxRsBeanValidationHandler
+          required_when: validation.bean_validation

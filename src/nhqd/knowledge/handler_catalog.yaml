@@ -1,0 +1,335 @@
+# Nablarch Handler Catalog
+# Full specification of available handlers, their categories,
+# and applicable application types.
+
+handlers:
+  # === Common Handlers (all application types) ===
+  - name: GlobalErrorHandler
+    full_class: nablarch.fw.handler.GlobalErrorHandler
+    category: common
+    description: Catches all uncaught exceptions and returns appropriate error responses.
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+    typical_position: near_top
+    inbound: Catches exceptions from downstream handlers
+    outbound: Returns error response
+
+  - name: ThreadContextClearHandler
+    full_class: nablarch.common.handler.threadcontext.ThreadContextClearHandler
+    category: common
+    description: Clears thread context at the start of request processing.
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+    typical_position: near_top
+    inbound: Clears ThreadContext
+    outbound: none
+
+  - name: ThreadContextHandler
+    full_class: nablarch.common.handler.threadcontext.ThreadContextHandler
+    category: common
+    description: Sets up thread context variables (user ID, request ID, etc.).
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+    typical_position: early
+    inbound: Populates ThreadContext from request
+    outbound: none
+
+  - name: DbConnectionManagementHandler
+    full_class: nablarch.common.handler.DbConnectionManagementHandler
+    category: common
+    description: Manages database connection lifecycle (acquire/release).
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+    typical_position: middle
+    inbound: Acquires DB connection
+    outbound: Releases DB connection
+
+  - name: TransactionManagementHandler
+    full_class: nablarch.common.handler.TransactionManagementHandler
+    category: common
+    description: Manages transaction boundaries (begin/commit/rollback).
+    applicable_types: [web, rest, batch, batch_resident, mom_messaging, http_messaging]
+    typical_position: middle
+    inbound: Begins transaction
+    outbound: Commits or rolls back transaction
+    constraints:
+      - must_be_after: DbConnectionManagementHandler
+        reason: "DB connection must be established before transaction (C-01)"
+
+  # === Web-specific Handlers ===
+  - name: HttpCharacterEncodingHandler
+    full_class: nablarch.fw.web.handler.HttpCharacterEncodingHandler
+    category: web
+    description: Sets character encoding for HTTP request/response.
+    applicable_types: [web, http_messaging]
+    typical_position: first
+    inbound: Sets request encoding
+    outbound: Sets response encoding
+
+  - name: HttpResponseHandler
+    full_class: nablarch.fw.web.handler.HttpResponseHandler
+    category: web
+    description: Converts HttpResponse to servlet response.
+    applicable_types: [web, http_messaging]
+    typical_position: early
+    inbound: none
+    outbound: Writes HTTP response
+
+  - name: SecureHandler
+    full_class: nablarch.fw.web.handler.SecureHandler
+    category: web
+    description: Adds security headers (CSP, X-Frame-Options, etc.).
+    applicable_types: [web]
+    typical_position: early
+    inbound: none
+    outbound: Adds security headers
+
+  - name: MultipartHandler
+    full_class: nablarch.fw.web.upload.handler.MultipartHandler
+    category: web
+    description: Handles multipart/form-data requests (file uploads).
+    applicable_types: [web]
+    typical_position: early
+    inbound: Parses multipart request
+    outbound: Cleans up temp files
+
+  - name: SessionStoreHandler
+    full_class: nablarch.common.web.session.SessionStoreHandler
+    category: web
+    description: Manages session store (DB-backed or HTTP session).
+    applicable_types: [web]
+    typical_position: early
+    inbound: Loads session data
+    outbound: Saves session data
+
+  - name: HttpAccessLogHandler
+    full_class: nablarch.fw.web.handler.HttpAccessLogHandler
+    category: web
+    description: Outputs HTTP access logs.
+    applicable_types: [web]
+    typical_position: early
+    inbound: Logs request start
+    outbound: Logs request end
+
+  - name: NormalizationHandler
+    full_class: nablarch.fw.web.handler.NormalizationHandler
+    category: web
+    description: Normalizes input values (trimming, date formatting, etc.).
+    applicable_types: [web]
+    typical_position: middle
+    inbound: Normalizes request parameters
+    outbound: none
+
+  - name: ForwardingHandler
+    full_class: nablarch.fw.web.handler.ForwardingHandler
+    category: web
+    description: Handles internal forwarding between actions.
+    applicable_types: [web]
+    typical_position: middle
+    inbound: Checks for forward directives
+    outbound: none
+
+  - name: HttpErrorHandler
+    full_class: nablarch.fw.web.handler.HttpErrorHandler
+    category: web
+    description: Maps exceptions to HTTP error pages.
+    applicable_types: [web]
+    typical_position: middle
+    inbound: none
+    outbound: Maps exceptions to error pages
+
+  - name: NablarchTagHandler
+    full_class: nablarch.common.web.handler.NablarchTagHandler
+    category: web
+    description: Processes Nablarch custom JSP tags.
+    applicable_types: [web]
+    typical_position: middle
+    inbound: Initializes tag context
+    outbound: none
+
+  - name: CsrfTokenVerificationHandler
+    full_class: nablarch.fw.web.handler.CsrfTokenVerificationHandler
+    category: web
+    description: Verifies CSRF tokens for state-changing requests.
+    applicable_types: [web]
+    typical_position: middle
+    inbound: Validates CSRF token
+    outbound: none
+
+  - name: LoginUserPrincipalCheckHandler
+    full_class: nablarch.common.web.handler.LoginUserPrincipalCheckHandler
+    category: web
+    description: Checks that a logged-in user principal exists.
+    applicable_types: [web]
+    typical_position: late
+    inbound: Verifies authentication
+    outbound: none
+
+  - name: ErrorForwardHandler
+    full_class: nablarch.fw.web.handler.ErrorForwardHandler
+    category: web
+    description: Forwards to error pages based on error codes.
+    applicable_types: [web]
+    typical_position: late
+    inbound: none
+    outbound: Forwards on error
+
+  - name: HttpRequestJavaPackageMapping
+    full_class: nablarch.fw.web.handler.HttpRequestJavaPackageMapping
+    category: web
+    description: Dispatches to action classes based on request URI.
+    applicable_types: [web]
+    typical_position: last
+    inbound: Dispatches to action
+    outbound: none
+    constraints:
+      - must_be_last: true
+        reason: "Dispatch handler does not call subsequent handlers (C-02)"
+
+  # === REST-specific Handlers ===
+  - name: JaxRsResponseHandler
+    full_class: nablarch.fw.jaxrs.JaxRsResponseHandler
+    category: rest
+    description: Converts action return values to HTTP responses (JSON, etc.).
+    applicable_types: [rest]
+    typical_position: early
+    inbound: none
+    outbound: Serializes response
+
+  - name: RoutesMapping
+    full_class: nablarch.fw.jaxrs.JaxRsMethodBinder
+    category: rest
+    description: Routes requests to JAX-RS resource methods.
+    applicable_types: [rest]
+    typical_position: last
+    inbound: Routes to resource method
+    outbound: none
+
+  - name: BodyConvertHandler
+    full_class: nablarch.fw.jaxrs.BodyConvertHandler
+    category: rest
+    description: Converts request body to Java objects and vice versa.
+    applicable_types: [rest]
+    typical_position: inside_routes
+    inbound: Deserializes request body
+    outbound: none
+    constraints:
+      - must_be_inside: RoutesMapping
+        reason: "Executes only after routing (C-03)"
+
+  - name: JaxRsBeanValidationHandler
+    full_class: nablarch.fw.jaxrs.JaxRsBeanValidationHandler
+    category: rest
+    description: Performs Bean Validation on request objects.
+    applicable_types: [rest]
+    typical_position: inside_routes
+    inbound: Validates request beans
+    outbound: none
+    constraints:
+      - must_be_inside: RoutesMapping
+        reason: "Executes only after routing (C-03)"
+
+  # === Batch-specific Handlers ===
+  - name: StatusCodeConvertHandler
+    full_class: nablarch.fw.handler.StatusCodeConvertHandler
+    category: batch
+    description: Converts process exit status codes.
+    applicable_types: [batch, batch_resident]
+    typical_position: first
+    inbound: none
+    outbound: Converts status code
+
+  - name: RequestPathJavaPackageMapping
+    full_class: nablarch.fw.handler.RequestPathJavaPackageMapping
+    category: batch
+    description: Dispatches to batch action classes based on request path.
+    applicable_types: [batch, batch_resident]
+    typical_position: middle
+    inbound: Dispatches to action
+    outbound: none
+
+  - name: MultiThreadExecutionHandler
+    full_class: nablarch.fw.handler.MultiThreadExecutionHandler
+    category: batch
+    description: Manages multi-threaded batch execution.
+    applicable_types: [batch, batch_resident]
+    typical_position: middle
+    inbound: Spawns worker threads
+    outbound: Collects results
+
+  - name: LoopHandler
+    full_class: nablarch.fw.handler.LoopHandler
+    category: batch
+    description: Controls loop processing for batch data reads.
+    applicable_types: [batch, batch_resident]
+    typical_position: late
+    inbound: Iterates over data
+    outbound: none
+    constraints:
+      - must_be_after: MultiThreadExecutionHandler
+        reason: "Operates within sub-threads (C-07)"
+
+  - name: DataReadHandler
+    full_class: nablarch.fw.handler.DataReadHandler
+    category: batch
+    description: Reads input data for batch processing.
+    applicable_types: [batch, batch_resident]
+    typical_position: last
+    inbound: Reads data records
+    outbound: none
+    constraints:
+      - must_be_after: LoopHandler
+        reason: "Must be under loop control (C-08)"
+
+  # === Batch Resident Additional Handlers ===
+  - name: RetryHandler
+    full_class: nablarch.fw.handler.RetryHandler
+    category: batch_resident
+    description: Provides retry logic for failed processing.
+    applicable_types: [batch_resident]
+    typical_position: middle
+    inbound: Wraps with retry logic
+    outbound: none
+
+  - name: ProcessResidentHandler
+    full_class: nablarch.fw.handler.ProcessResidentHandler
+    category: batch_resident
+    description: Keeps the batch process running (resident mode).
+    applicable_types: [batch_resident]
+    typical_position: middle
+    inbound: Maintains process lifecycle
+    outbound: none
+
+  - name: ProcessStopHandler
+    full_class: nablarch.fw.handler.ProcessStopHandler
+    category: batch_resident
+    description: Handles graceful process shutdown.
+    applicable_types: [batch_resident]
+    typical_position: middle
+    inbound: Checks stop conditions
+    outbound: none
+
+  # === Messaging Handlers ===
+  - name: HttpMessagingRequestParsingHandler
+    full_class: nablarch.fw.messaging.handler.HttpMessagingRequestParsingHandler
+    category: messaging
+    description: Parses HTTP messaging requests.
+    applicable_types: [http_messaging]
+    typical_position: middle
+    inbound: Parses messaging request
+    outbound: none
+    constraints:
+      - must_be_after: HttpResponseHandler
+        reason: "Must be after response handler (C-04)"
+      - must_be_after: ThreadContextHandler
+        reason: "Requires thread context (C-05)"
+
+  - name: HealthCheckEndpointHandler
+    full_class: nablarch.fw.web.handler.HealthCheckEndpointHandler
+    category: common
+    description: Provides health check endpoint for monitoring.
+    applicable_types: [web, rest]
+    typical_position: early
+    inbound: Responds to health check
+    outbound: none
+    constraints:
+      - must_be_after: HttpResponseHandler
+        reason: "Depends on response handler (C-06)"
+      - must_be_after: JaxRsResponseHandler
+        reason: "Depends on response handler (C-06)"

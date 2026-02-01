@@ -1,0 +1,47 @@
+# HTTP Messaging Handler Queue Pattern
+# Configuration for HTTP-based messaging applications.
+
+pattern:
+  name: http_messaging
+  app_type: http_messaging
+  description: HTTP-based messaging application
+  controller_class: nablarch.fw.web.servlet.WebFrontController
+  controller_name: webFrontController
+
+  handlers:
+    - name: HttpCharacterEncodingHandler
+      full_class: nablarch.fw.web.handler.HttpCharacterEncodingHandler
+      required: true
+
+    - name: GlobalErrorHandler
+      full_class: nablarch.fw.handler.GlobalErrorHandler
+      required: true
+
+    - name: HttpResponseHandler
+      full_class: nablarch.fw.web.handler.HttpResponseHandler
+      required: true
+
+    - name: ThreadContextClearHandler
+      full_class: nablarch.common.handler.threadcontext.ThreadContextClearHandler
+      required: true
+
+    - name: ThreadContextHandler
+      full_class: nablarch.common.handler.threadcontext.ThreadContextHandler
+      required: true
+
+    - name: HttpMessagingRequestParsingHandler
+      full_class: nablarch.fw.messaging.handler.HttpMessagingRequestParsingHandler
+      required: true
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+
+    - name: TransactionManagementHandler
+      full_class: nablarch.common.handler.TransactionManagementHandler
+      required_when: database.transaction
+
+    - name: HttpRequestJavaPackageMapping
+      full_class: nablarch.fw.web.handler.HttpRequestJavaPackageMapping
+      required: true
+      fixed_position: last

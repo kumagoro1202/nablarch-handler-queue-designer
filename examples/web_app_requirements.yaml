@@ -1,0 +1,49 @@
+# NHQD Requirements File - Web Application Example
+# This file defines the requirements for generating a Nablarch handler queue
+# for a typical web application with session-based authentication.
+
+project:
+  name: "Customer Management System"
+  type: web
+
+requirements:
+  database:
+    enabled: true
+    type: PostgreSQL
+    transaction: required
+
+  authentication:
+    enabled: true
+    type: session
+    login_check: true
+
+  security:
+    csrf_protection: true
+    secure_headers: true
+    cors: false
+
+  session:
+    enabled: true
+    store: db
+
+  logging:
+    access_log: true
+    sql_log: true
+
+  validation:
+    bean_validation: true
+    double_submit_check: true
+
+  file_handling:
+    multipart: true
+    file_download: false
+
+  normalization:
+    trim: true
+    date_format: true
+
+  # Optional: custom handlers to inject into the queue
+  # custom_handlers:
+  #   - name: "AuditLogHandler"
+  #     position: "after:TransactionManagementHandler"
+  #     description: "Records audit log entries for all transactions"

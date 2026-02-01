@@ -1,0 +1,62 @@
+# Resident Batch Application Handler Queue Pattern
+# Configuration for Nablarch resident (always-running) batch applications.
+
+pattern:
+  name: batch_resident
+  app_type: batch_resident
+  description: Resident batch application with retry and process control
+  controller_class: nablarch.fw.launcher.Main
+  controller_name: main
+
+  handlers:
+    - name: StatusCodeConvertHandler
+      full_class: nablarch.fw.handler.StatusCodeConvertHandler
+      required: true
+
+    - name: GlobalErrorHandler
+      full_class: nablarch.fw.handler.GlobalErrorHandler
+      required: true
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+      note: "For initialization processing"
+
+    - name: TransactionManagementHandler
+      full_class: nablarch.common.handler.TransactionManagementHandler
+      required_when: database.transaction
+      note: "For initialization processing"
+
+    - name: RequestPathJavaPackageMapping
+      full_class: nablarch.fw.handler.RequestPathJavaPackageMapping
+      required: true
+
+    - name: MultiThreadExecutionHandler
+      full_class: nablarch.fw.handler.MultiThreadExecutionHandler
+      required: true
+
+    - name: RetryHandler
+      full_class: nablarch.fw.handler.RetryHandler
+      required: true
+
+    - name: ProcessResidentHandler
+      full_class: nablarch.fw.handler.ProcessResidentHandler
+      required: true
+
+    - name: ProcessStopHandler
+      full_class: nablarch.fw.handler.ProcessStopHandler
+      required: true
+
+    - name: DbConnectionManagementHandler
+      full_class: nablarch.common.handler.DbConnectionManagementHandler
+      required_when: database.enabled
+      note: "For business processing (per-thread)"
+
+    - name: LoopHandler
+      full_class: nablarch.fw.handler.LoopHandler
+      required: true
+
+    - name: DataReadHandler
+      full_class: nablarch.fw.handler.DataReadHandler
+      required: true
+      fixed_position: last
