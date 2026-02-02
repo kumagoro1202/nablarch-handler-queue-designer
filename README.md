@@ -1,23 +1,23 @@
 # Nablarch Handler Queue Designer (NHQD)
 
-Automated handler queue configuration tool for the [Nablarch](https://nablarch.github.io/) framework.
+[Nablarch](https://nablarch.github.io/) フレームワーク向けハンドラキュー自動設計ツール。
 
-## Overview
+## 概要
 
-NHQD generates optimal Nablarch handler queue configurations from structured YAML requirements. It uses a rule-based inference engine with DAG-based topological sorting to ensure all handler ordering constraints are satisfied.
+NHQDは構造化されたYAML要件定義から、最適なNablarchハンドラキュー構成を自動生成します。ルールベース推論エンジンとDAGベースのトポロジカルソートにより、全てのハンドラ順序制約を確実に充足します。
 
-### Supported Application Types
+### 対応アプリケーション種別
 
-| Type | Description |
-|------|-------------|
-| `web` | Web applications (HTML/JSP) |
-| `rest` | RESTful web services (JAX-RS) |
-| `batch` | On-demand batch applications |
-| `batch_resident` | Resident batch applications |
-| `mom_messaging` | MOM-based messaging |
-| `http_messaging` | HTTP-based messaging |
+| 種別 | 説明 |
+|------|------|
+| `web` | Webアプリケーション（HTML/JSP） |
+| `rest` | RESTful Webサービス（JAX-RS） |
+| `batch` | 都度起動バッチ |
+| `batch_resident` | 常駐バッチ |
+| `mom_messaging` | MOMメッセージング |
+| `http_messaging` | HTTPメッセージング |
 
-## Architecture
+## アーキテクチャ
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -25,51 +25,51 @@ NHQD generates optimal Nablarch handler queue configurations from structured YAM
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
 │  ┌────────────┐   ┌──────────────┐   ┌──────────────┐  │
-│  │   Parser    │──→│  Rule Engine  │──→│  Generator   │  │
-│  │  (YAML)    │   │  (DAG Sort)  │   │  (XML/MD)    │  │
+│  │  パーサー    │──→│  推論エンジン  │──→│  出力生成器   │  │
+│  │  (YAML)    │   │ (DAGソート)  │   │  (XML/MD)    │  │
 │  └────────────┘   └──────┬───────┘   └──────────────┘  │
 │                          │                               │
 │                ┌─────────┴─────────┐                     │
-│                │  Knowledge Base    │                     │
-│                │  - Handler Catalog │                     │
-│                │  - Constraints     │                     │
-│                │  - Patterns        │                     │
+│                │  ナレッジベース      │                     │
+│                │ ・ハンドラカタログ    │                     │
+│                │ ・順序制約          │                     │
+│                │ ・設計パターン      │                     │
 │                └───────────────────┘                     │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
 
-## Installation
+## インストール
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-## Usage
+## 使い方
 
-### Generate handler queue from requirements
+### 要件定義からハンドラキューを生成
 
 ```bash
 nhqd generate examples/web_app_requirements.yaml -o output/
 ```
 
-### Validate existing configuration
+### 既存構成の検証
 
 ```bash
 nhqd validate path/to/handler-queue-config.xml
 ```
 
-### List available handlers
+### 利用可能なハンドラ一覧
 
 ```bash
 nhqd list-handlers
 ```
 
-## Requirements File Format
+## 要件定義ファイルフォーマット
 
 ```yaml
 project:
-  name: "My Application"
+  name: "顧客管理システム"
   type: web  # web | rest | batch | batch_resident | mom_messaging | http_messaging
 
 requirements:
@@ -86,38 +86,38 @@ requirements:
     secure_headers: true
 ```
 
-See `examples/web_app_requirements.yaml` for a complete example.
+完全な例は `examples/web_app_requirements.yaml` を参照。
 
-## Ordering Constraints
+## 順序制約
 
-NHQD enforces the following handler ordering constraints:
+NHQDは以下のハンドラ順序制約を強制します：
 
-| ID | Rule | Severity |
-|----|------|----------|
-| C-01 | Transaction must be after DB connection | Critical |
-| C-02 | Dispatch handler must be last | Critical |
-| C-03 | RoutesMapping inner handlers must be inside RoutesMapping | Critical |
-| C-04 | HTTP messaging parser must be after response handler | Critical |
-| C-05 | HTTP messaging parser must be after thread context | Critical |
-| C-06 | Health check must be after response handler | Warning |
-| C-07 | LoopHandler must be after MultiThreadExecutionHandler | Critical |
-| C-08 | DataReadHandler must be after LoopHandler | Critical |
-| C-09 | GlobalErrorHandler should be near top | Warning |
-| C-10 | Interceptor order must be explicit | Warning |
+| ID | ルール | 重要度 |
+|----|--------|--------|
+| C-01 | トランザクションはDB接続より後 | 致命的 |
+| C-02 | ディスパッチハンドラは末尾 | 致命的 |
+| C-03 | RoutesMapping内ハンドラはRoutesMapping内部に配置 | 致命的 |
+| C-04 | HTTPメッセージングパーサーはレスポンスハンドラより後 | 致命的 |
+| C-05 | HTTPメッセージングパーサーはスレッドコンテキストより後 | 致命的 |
+| C-06 | ヘルスチェックはレスポンスハンドラより後 | 警告 |
+| C-07 | LoopHandlerはMultiThreadExecutionHandlerより後 | 致命的 |
+| C-08 | DataReadHandlerはLoopHandlerより後 | 致命的 |
+| C-09 | GlobalErrorHandlerは先頭付近 | 警告 |
+| C-10 | インターセプタの実行順序は明示必要 | 警告 |
 
-## Development
+## 開発
 
 ```bash
-# Install dev dependencies
+# 開発用依存関係のインストール
 pip install -e ".[dev]"
 
-# Run tests
+# テスト実行
 pytest
 
-# Lint
+# リント
 ruff check src/ tests/
 ```
 
-## License
+## ライセンス
 
-Apache License 2.0 - see [LICENSE](LICENSE) for details.
+Apache License 2.0 - 詳細は [LICENSE](LICENSE) を参照。
